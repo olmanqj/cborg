@@ -56,6 +56,9 @@ public:
     // write <integer>
     Cbore& item(int32_t value);
 
+    // write <float>
+    Cbore& item_f(double value);
+
     // write <simple type>
     Cbore& item(CborBase::SimpleType_t simpleType);
 
@@ -118,6 +121,9 @@ public:
     // insert value as integer
     Cbore& value(int32_t unit);
 
+    // insert value as float
+    Cbore& value_f(double value);
+
     // insert value as simple type
     Cbore& value(CborBase::SimpleType_t value);
 
@@ -155,6 +161,7 @@ public:
 private:
     uint8_t itemSize(int32_t item);
     uint8_t writeTypeAndValue(CborBase::MajorType_t majorType, uint32_t value);
+    uint8_t writeFloat(double value);
     uint32_t writeBytes(const uint8_t* source, uint32_t length);
 
 private:
