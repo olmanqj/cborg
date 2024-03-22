@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+// clang-format off
 #include "cborg/Cborg.h"
 
 #include <list>
@@ -88,6 +89,12 @@ bool Cborg::getCBOR(const uint8_t** pointer, uint32_t* length)
             // decrement unit count unless set to indefinite
             if (units != maxOf(units))
             {
+                // if we end up with more units than we have bytes for, then something
+                // is very wrong.
+                if (units > maxLength - progress) {
+                  return false;
+                }
+
                 units--;
             }
 
@@ -110,6 +117,10 @@ bool Cborg::getCBOR(const uint8_t** pointer, uint32_t* length)
                 {
                     list.push_back(units);
                     units = 2 * head.getValue();
+                } else if (units == maxOf(units)) {
+                    // We're not making progress. We'll just process the current unit
+                    // endlessly. Something is wrong. We need to bail.
+                    return false;
                 }
             }
             else if (type == CborBase::TypeArray)
@@ -123,6 +134,10 @@ bool Cborg::getCBOR(const uint8_t** pointer, uint32_t* length)
                 {
                     list.push_back(units);
                     units = head.getValue();
+                } else if (units == maxOf(units)) {
+                    // We're not making progress. We'll just process the current unit
+                    // endlessly. Something is wrong. We need to bail.
+                    return false;
                 }
             }
             else if (((type == CborBase::TypeBytes) || (type == CborBase::TypeString))
@@ -133,7 +148,12 @@ bool Cborg::getCBOR(const uint8_t** pointer, uint32_t* length)
             }
 
             // increment progress based on cbor object size
-            if (((type == CborBase::TypeBytes) || (type == CborBase::TypeString))
+            if (units == maxOf(units) && head.getLength() == 0)
+            {
+                // We're not making progress. We'll just process the current unit
+                // endlessly. Something is wrong. We need to bail.
+                return false;
+            } else if (((type == CborBase::TypeBytes) || (type == CborBase::TypeString))
                     && (simple != CborBase::TypeIndefinite))
             {
                 progress += head.getLength() + head.getValue();
@@ -225,6 +245,12 @@ uint32_t Cborg::getCBORLength()
             // decrement unit count unless set to indefinite
             if (units != maxOf(units))
             {
+                // if we end up with more units than we have bytes for, then something
+                // is very wrong.
+                if (units > maxLength - progress) {
+                  return false;
+                }
+
                 units--;
             }
 
@@ -247,6 +273,10 @@ uint32_t Cborg::getCBORLength()
                 {
                     list.push_back(units);
                     units = 2 * head.getValue();
+                } else if (units == maxOf(units)) {
+                    // We're not making progress. We'll just process the current unit
+                    // endlessly. Something is wrong. We need to bail.
+                    return false;
                 }
             }
             else if (type == CborBase::TypeArray)
@@ -260,6 +290,10 @@ uint32_t Cborg::getCBORLength()
                 {
                     list.push_back(units);
                     units = head.getValue();
+                } else if (units == maxOf(units)) {
+                    // We're not making progress. We'll just process the current unit
+                    // endlessly. Something is wrong. We need to bail.
+                    return false;
                 }
             }
             else if (((type == CborBase::TypeBytes) || (type == CborBase::TypeString))
@@ -270,7 +304,12 @@ uint32_t Cborg::getCBORLength()
             }
 
             // increment progress based on cbor object size
-            if (((type == CborBase::TypeBytes) || (type == CborBase::TypeString))
+            if (units == maxOf(units) && head.getLength() == 0)
+            {
+                // We're not making progress. We'll just process the current unit
+                // endlessly. Something is wrong. We need to bail.
+                return false;
+            } else if (((type == CborBase::TypeBytes) || (type == CborBase::TypeString))
                     && (simple != CborBase::TypeIndefinite))
             {
                 progress += head.getLength() + head.getValue();
@@ -348,6 +387,12 @@ Cborg Cborg::find(int32_t key) const
         // decrement unit count unless set to indefinite
         if (units != maxOf(units))
         {
+            // if we end up with more units than we have bytes for, then something
+            // is very wrong.
+            if (units > maxLength - progress) {
+                return Cborg(NULL, 0);
+            }
+
             units--;
         }
 
@@ -372,6 +417,10 @@ Cborg Cborg::find(int32_t key) const
             {
                 list.push_back(units);
                 units = 2 * head.getValue();
+            } else if (units == maxOf(units)) {
+                // We're not making progress. We'll just process the current unit
+                // endlessly. Something is wrong. We need to bail.
+                return Cborg(NULL, 0);
             }
         }
         else if (type == CborBase::TypeArray)
@@ -387,6 +436,10 @@ Cborg Cborg::find(int32_t key) const
             {
                 list.push_back(units);
                 units = head.getValue();
+            } else if (units == maxOf(units)) {
+                // We're not making progress. We'll just process the current unit
+                // endlessly. Something is wrong. We need to bail.
+                return Cborg(NULL, 0);
             }
         }
         else if (((type == CborBase::TypeBytes) || (type == CborBase::TypeString))
@@ -446,7 +499,12 @@ Cborg Cborg::find(int32_t key) const
         }
 
         // increment progress based on cbor object size
-        if (((type == CborBase::TypeBytes) || (type == CborBase::TypeString))
+        if (units == maxOf(units) && head.getLength() == 0)
+        {
+            // We're not making progress. We'll just process the current unit
+            // endlessly. Something is wrong. We need to bail.
+            return Cborg(NULL, 0);
+        } else if (((type == CborBase::TypeBytes) || (type == CborBase::TypeString))
                 && (simple != CborBase::TypeIndefinite))
         {
             progress += head.getLength() + head.getValue();
@@ -515,6 +573,12 @@ Cborg Cborg::find(const char* key, std::size_t keyLength) const
         // decrement unit count unless set to indefinite
         if (units != maxOf(units))
         {
+            // if we end up with more units than we have bytes for, then something
+            // is very wrong.
+            if (units > maxLength - progress) {
+                return Cborg(NULL, 0);
+            }
+
             units--;
         }
 
@@ -539,6 +603,10 @@ Cborg Cborg::find(const char* key, std::size_t keyLength) const
             {
                 list.push_back(units);
                 units = 2 * head.getValue();
+            } else if (units == maxOf(units)) {
+                // We're not making progress. We'll just process the current unit
+                // endlessly. Something is wrong. We need to bail.
+                return Cborg(NULL, 0);
             }
         }
         else if (type == CborBase::TypeArray)
@@ -554,6 +622,10 @@ Cborg Cborg::find(const char* key, std::size_t keyLength) const
             {
                 list.push_back(units);
                 units = head.getValue();
+            } else if (units == maxOf(units)) {
+                // We're not making progress. We'll just process the current unit
+                // endlessly. Something is wrong. We need to bail.
+                return Cborg(NULL, 0);
             }
         }
         else if (((type == CborBase::TypeBytes) || (type == CborBase::TypeString))
@@ -588,6 +660,12 @@ Cborg Cborg::find(const char* key, std::size_t keyLength) const
 
                             for (std::size_t idx = 0; idx < keyLength; idx++)
                             {
+                                // If the keyLength pushes us past maxLength then something is
+                                // seriously wrong.
+                                if (progress + keyLength >= maxLength) {
+                                  return Cborg(NULL, 0);
+                                }
+
                                 // break out of loop if string is different from the key
                                 if (key[idx] != cbor[progress + head.getLength() + idx])
                                 {
@@ -615,7 +693,12 @@ Cborg Cborg::find(const char* key, std::size_t keyLength) const
         }
 
         // increment progress based on cbor object size
-        if (((type == CborBase::TypeBytes) || (type == CborBase::TypeString))
+        if (units == maxOf(units) && head.getLength() == 0)
+        {
+            // We're not making progress. We'll just process the current unit
+            // endlessly. Something is wrong. We need to bail.
+            return Cborg(NULL, 0);
+        } else if (((type == CborBase::TypeBytes) || (type == CborBase::TypeString))
                 && (simple != CborBase::TypeIndefinite))
         {
             progress += head.getLength() + head.getValue();
@@ -692,6 +775,12 @@ Cborg Cborg::getKey(std::size_t index) const
             // decrement unit count unless set to indefinite
             if (units != maxOf(units))
             {
+                // if we end up with more units than we have bytes for, then something
+                // is very wrong.
+                if (units > maxLength - progress) {
+                    return Cborg(NULL, 0);
+                }
+
                 units--;
             }
 
@@ -714,6 +803,10 @@ Cborg Cborg::getKey(std::size_t index) const
                 {
                     list.push_back(units);
                     units = 2 * head.getValue();
+                } else if (units == maxOf(units)) {
+                    // We're not making progress. We'll just process the current unit
+                    // endlessly. Something is wrong. We need to bail.
+                    return Cborg(NULL, 0);
                 }
             }
             else if (type == CborBase::TypeArray)
@@ -727,6 +820,10 @@ Cborg Cborg::getKey(std::size_t index) const
                 {
                     list.push_back(units);
                     units = head.getValue();
+                } else if (units == maxOf(units)) {
+                    // We're not making progress. We'll just process the current unit
+                    // endlessly. Something is wrong. We need to bail.
+                    return Cborg(NULL, 0);
                 }
             }
             else if (((type == CborBase::TypeBytes) || (type == CborBase::TypeString))
@@ -737,7 +834,12 @@ Cborg Cborg::getKey(std::size_t index) const
             }
 
             // increment progress based on cbor object size
-            if (((type == CborBase::TypeBytes) || (type == CborBase::TypeString))
+            if (units == maxOf(units) && head.getLength() == 0)
+            {
+                // We're not making progress. We'll just process the current unit
+                // endlessly. Something is wrong. We need to bail.
+                return Cborg(NULL, 0);
+            } else if (((type == CborBase::TypeBytes) || (type == CborBase::TypeString))
                     && (simple != CborBase::TypeIndefinite))
             {
                 progress += head.getLength() + head.getValue();
@@ -821,6 +923,12 @@ Cborg Cborg::at(std::size_t index) const
             // decrement unit count unless set to indefinite
             if (units != maxOf(units))
             {
+                // if we end up with more units than we have bytes for, then something
+                // is very wrong.
+                if (units > maxLength - progress) {
+                    return Cborg(NULL, 0);
+                }
+
                 units--;
             }
 
@@ -843,6 +951,10 @@ Cborg Cborg::at(std::size_t index) const
                 {
                     list.push_back(units);
                     units = 2 * head.getValue();
+                } else if (units == maxOf(units)) {
+                    // We're not making progress. We'll just process the current unit
+                    // endlessly. Something is wrong. We need to bail.
+                    return Cborg(NULL, 0);
                 }
             }
             else if (type == CborBase::TypeArray)
@@ -856,6 +968,10 @@ Cborg Cborg::at(std::size_t index) const
                 {
                     list.push_back(units);
                     units = head.getValue();
+                } else if (units == maxOf(units)) {
+                    // We're not making progress. We'll just process the current unit
+                    // endlessly. Something is wrong. We need to bail.
+                    return Cborg(NULL, 0);
                 }
             }
             else if (((type == CborBase::TypeBytes) || (type == CborBase::TypeString))
@@ -866,7 +982,12 @@ Cborg Cborg::at(std::size_t index) const
             }
 
             // increment progress based on cbor object size
-            if (((type == CborBase::TypeBytes) || (type == CborBase::TypeString))
+            if (units == maxOf(units) && head.getLength() == 0)
+            {
+                // We're not making progress. We'll just process the current unit
+                // endlessly. Something is wrong. We need to bail.
+                return Cborg(NULL, 0);
+            } else if (((type == CborBase::TypeBytes) || (type == CborBase::TypeString))
                     && (simple != CborBase::TypeIndefinite))
             {
                 progress += head.getLength() + head.getValue();
@@ -1072,6 +1193,12 @@ void Cborg::print() const
         // decrement unit count unless set to indefinite
         if (units != maxOf(units))
         {
+            // if we end up with more units than we have bytes for, then something
+            // is very wrong.
+            if (units > maxLength - progress) {
+                return;
+            }
+
             units--;
         }
 
@@ -1111,6 +1238,10 @@ void Cborg::print() const
 
                 list.push_back(units);
                 units = 2 * head.getValue();
+            } else if (units == maxOf(units)) {
+                // We're not making progress. We'll just process the current unit
+                // endlessly. Something is wrong. We need to bail.
+                return;
             }
         }
         else if (type == CborBase::TypeArray)
@@ -1128,6 +1259,10 @@ void Cborg::print() const
 
                 list.push_back(units);
                 units = head.getValue();
+            } else if (units == maxOf(units)) {
+                // We're not making progress. We'll just process the current unit
+                // endlessly. Something is wrong. We need to bail.
+                return;
             }
         }
         else if ((type == CborBase::TypeBytes) && (simple == CborBase::TypeIndefinite))
@@ -1261,7 +1396,12 @@ void Cborg::print() const
         }
 
         // increment progress based on cbor object size
-        if (((type == CborBase::TypeBytes) || (type == CborBase::TypeString))
+        if (units == maxOf(units) && head.getLength() == 0)
+        {
+            // We're not making progress. We'll just process the current unit
+            // endlessly. Something is wrong. We need to bail.
+            return;
+        } else if (((type == CborBase::TypeBytes) || (type == CborBase::TypeString))
                 && (simple != CborBase::TypeIndefinite))
         {
             progress += head.getLength() + head.getValue();
@@ -1292,4 +1432,4 @@ void Cborg::print() const
     }
 }
 
-
+// clang-format on
